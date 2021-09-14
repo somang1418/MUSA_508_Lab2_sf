@@ -192,4 +192,5 @@ ggplot()+
     caption = "Data: US Census Bureau, ACS 5-year estimates")
 ```
 
-![](Lab2_assignment_files/figure-gfm/ggplot_geom_sf-1.png)<!-- -->
+
+![](IMG/lab2plot.png)<!-- -->
