@@ -1,7 +1,7 @@
 ---
 title: "Lab2_assignment"
-author: "Matt Harris"
-date: "9/8/2021"
+author: "Somang (So) Han"
+date: "9/14/2021"
 output: github_document
 editor_options: 
   markdown: 
@@ -63,10 +63,29 @@ Steps in this assignment:
 
 ## Load data from {tidycensus}
 
-```{r acs_vars, cache = TRUE, message = FALSE, warning = FALSE, results=FALSE}
-acs_vars <- c( "[PUT YOUR VAR CODES HERE]")
+```{r}
+# vars <- load_variables(2019, "acs5")
+# View(vars)
+```
 
-myTracts <- c("[YOUR TRACTS GEOIDs HERE]")
+```{r load_key_hide, warning= FALSE, include=FALSE}
+census_api_key("85a7b9f09b041af3835517bba02cdb0918a803ca", overwrite = TRUE)
+```
+
+```{r acs_vars, cache = TRUE, message = FALSE, warning = FALSE, results=FALSE}
+
+acs_vars <- c( "B01001_001", 	# age 
+               "B01003_001", # total pop
+               "B06009_005") # education 
+
+
+myTracts <- c("42101037800", 
+              "42101018300", 
+              "42101018400",
+              "42101037900",
+              "42101014300")
+
+
 
 acsTractsPHL.2019.sf <- get_acs(geography = "tract",
                              year = 2019,
@@ -76,34 +95,51 @@ acsTractsPHL.2019.sf <- get_acs(geography = "tract",
                              county = "Philadelphia",
                              output = "wide") %>%
   dplyr::select (GEOID, NAME, all_of(paste0(acs_vars,"E"))) %>%
-  rename ("[RENAME YOUR VARIABLES HERE]") %>%
+  rename (total_pop.2019 = B01003_001E, 
+          total_sexbyage.2019 = B01001_001E, 
+          total_bachelor_degree.2019 = B06009_005E) %>%
   mutate(Neighborhood = ifelse(GEOID %in% myTracts,
-                               "[YOUR NEIGHBORHOOD NAME HERE]",
+                               "River Wards",
                                "REST OF PHILADELPHIA"))
 ```
+
+
 
 ## Transform to WGS84 with {sf}
 
 ```{r}
+
+class(acsTractsPHL.2019.sf)
+
+head(acsTractsPHL.2019.sf,2)
+acsTractsPHL.2019.sf$geometry
+
+
 acsTractsPHL.2019.sf <- acsTractsPHL.2019.sf %>% 
-  st_transform(crs = "[PUT THE WGS84 EPSG CODE HERE]")
+  st_transform(crs = "EPSG:4326")
 ```
+
+
 
 ## Plot with {ggplot2}
 
-```{r ggplot_geom_sf, warning = FALSE, echo = FALSE}
+```{r ggplot_geom_sf}
+
+library(viridis)
+
 ggplot()+
-  geom_sf(data = acsTractsPHL.2019.sf, aes(fill = "[YOUR VARIABLE NAME HERE]"),
+  geom_sf(data = acsTractsPHL.2019.sf, aes(fill = total_bachelor_degree.2019),
           color = "transparent")+
   geom_sf(data = acsTractsPHL.2019.sf %>%
-            filter(Neighborhood == "[YOUR NEIGHBORHOOD NAME HERE]") %>%
+            filter(Neighborhood == "River Wards") %>%
             st_union(),
           color = "white",
           fill = "transparent")+
+   scale_fill_viridis(option="magma") +
   # Bonus to figure out different color ramps with scale_fill_viridis()
   labs(
-    title = "[YOUR TITLE HERE]",
-    subtitle = "[YOUR SUBTITLE HERE]",
-    caption = "[YOUR CAPTION HERE]")
+    title = "Total # of population with bachelor_degree by tract in 2019",
+    subtitle = "",
+    caption = "Data: US Census Bureau, ACS 5-year estimates")
 
 ```
